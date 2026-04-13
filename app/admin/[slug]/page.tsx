@@ -14,16 +14,11 @@ const STATUS_COLOR: Record<string, string> = { PENDING: 'bg-amber-100 text-amber
 
 export default function DashboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
-  const [tab, setTab] = useState<'orders' | 'menu' | 'settings'>('orders')
+  const [tab, setTab] = useState<'orders' | 'menu'>('orders')
   const [store, setStore] = useState<Store | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [ordersLoading, setOrdersLoading] = useState(true)
-  const [storeName, setStoreName] = useState('')
-  const [themeColor, setThemeColor] = useState('#f97316')
-  const [promptpayId, setPromptpayId] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [settingsSaved, setSettingsSaved] = useState(false)
   const [paymentCount, setPaymentCount] = useState(0)
 
   const fetchOrders = useCallback(async () => {
@@ -39,12 +34,7 @@ export default function DashboardPage({ params }: { params: Promise<{ slug: stri
   const fetchStore = useCallback(async () => {
     const res = await fetch(`/api/admin/${slug}/tables`)
     const data = await res.json()
-    if (data.store) {
-      setStore(data.store)
-      setStoreName(data.store.name)
-      setThemeColor(data.store.themeColor)
-      setPromptpayId(data.store.promptpayId ?? '')
-    }
+    if (data.store) setStore(data.store)
   }, [slug])
 
   useEffect(() => { fetchStore() }, [fetchStore])
@@ -66,14 +56,6 @@ export default function DashboardPage({ params }: { params: Promise<{ slug: stri
     fetchOrders()
   }
 
-  async function saveSettings() {
-    setSaving(true)
-    await fetch(`/api/admin/${slug}/store`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: storeName, themeColor, promptpayId }) })
-    setSettingsSaved(true)
-    setTimeout(() => setSettingsSaved(false), 2000)
-    setSaving(false)
-  }
-
   function timeAgo(dateStr: string) {
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
     if (diff < 60) return `${diff} วิ`
@@ -92,8 +74,9 @@ export default function DashboardPage({ params }: { params: Promise<{ slug: stri
             <p className="text-xs text-gray-400">{slug}</p>
           </div>
           <div className="flex gap-2">
-            <Link href={`/kitchen/${slug}`} target="_blank" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 text-white text-xs font-medium">🍳 ครัว</Link>
-            <Link href={`/admin/${slug}/qr`} target="_blank" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-600">📱 QR</Link>
+            <Link href={`/admin/${slug}/pos`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800 text-white text-xs font-medium">🍽️ POS</Link>
+            <Link href={`/admin/${slug}/qr`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-600">📱 QR</Link>
+            <Link href={`/admin/${slug}/settings`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-600">⚙️ ตั้งค่า</Link>
             <Link href={`/order/${slug}/1`} target="_blank" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium text-gray-600">👁️ ดูหน้าร้าน</Link>
           </div>
         </div>
@@ -101,7 +84,6 @@ export default function DashboardPage({ params }: { params: Promise<{ slug: stri
           {[
             { key: 'orders', label: `📋 ออเดอร์${paymentCount > 0 ? ` 🔴${paymentCount}` : ''}` },
             { key: 'menu', label: '🍽️ เมนู' },
-            { key: 'settings', label: '⚙️ ตั้งค่า' },
           ].map((t) => (
             <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
               className="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
@@ -173,39 +155,6 @@ export default function DashboardPage({ params }: { params: Promise<{ slug: stri
       )}
 
       {tab === 'menu' && <MenuTab slug={slug} color={color} />}
-
-      {tab === 'settings' && (
-        <div className="p-6 max-w-md">
-          <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">ชื่อร้าน</label>
-              <input value={storeName} onChange={(e) => setStoreName(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">สีหลัก</label>
-              <div className="flex items-center gap-3">
-                <input type="color" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} className="w-10 h-10 rounded cursor-pointer border" />
-                <span className="text-sm text-gray-500">{themeColor}</span>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">PromptPay ID <span className="text-gray-400 font-normal">(เบอร์โทร หรือเลขบัตรประชาชน)</span></label>
-              <input value={promptpayId} onChange={(e) => setPromptpayId(e.target.value)} placeholder="0812345678" className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Link ลูกค้าสแกน</label>
-              <p className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2 break-all">
-                {typeof window !== 'undefined' ? window.location.origin : ''}/order/{slug}/[โต๊ะ]
-              </p>
-            </div>
-            <button onClick={saveSettings} disabled={saving}
-              className="w-full py-2 rounded-lg text-white font-medium text-sm disabled:opacity-60"
-              style={{ background: color }}>
-              {settingsSaved ? '✓ บันทึกแล้ว' : saving ? 'กำลังบันทึก...' : 'บันทึก'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
