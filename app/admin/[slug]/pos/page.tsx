@@ -184,6 +184,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
   }
 
 
+
   if (loading || !store) return (
     <AdminLayout slug={slug} color="#f97316" storeName="...">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--color-text-secondary)' }}>
@@ -195,192 +196,194 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
   return (
     <AdminLayout slug={slug} color={color} storeName={store.name}>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ background: '#fff', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '0.5px solid var(--color-border-tertiary)', flexShrink: 0 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาเมนู..."
-            style={{ flex: 1, background: '#f7f7f5', borderRadius: 8, border: 'none', padding: '7px 12px', fontSize: 13, color: 'var(--color-text-primary)', outline: 'none' }} />
-          {outOfStockCount > 0 && (
-            <span style={{ background: '#fee2e2', color: '#991b1b', fontSize: 11, padding: '4px 10px', borderRadius: 20, fontWeight: 500, whiteSpace: 'nowrap' }}>
-              {outOfStockCount} หมด
-            </span>
-          )}
-        </div>
 
-        <div style={{ background: '#fff', padding: '10px 16px', display: 'flex', gap: 8, borderBottom: '0.5px solid var(--color-border-tertiary)', overflowX: 'auto', scrollbarWidth: 'none', flexShrink: 0 }}>
-          {categories.map(cat => (
-            <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
-              style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', background: activeCategory === cat.id ? color : '#f3f4f6', color: activeCategory === cat.id ? '#fff' : '#6b7280' }}>
-              {cat.name}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
-            {filtered.map(item => (
-              <div key={item.id} style={{ background: '#fff', borderRadius: 14, border: '0.5px solid var(--color-border-tertiary)', overflow: 'hidden', opacity: item.isAvailable ? 1 : 0.55 }}>
-                <div onClick={() => addToCart(item)} style={{ cursor: item.isAvailable ? 'pointer' : 'default' }}>
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
-                  ) : (
-                    <div style={{ width: '100%', aspectRatio: '1/1', background: '#f5f5f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
-                  )}
-                  <div style={{ padding: '8px 10px 4px' }}>
-                    <p style={{ fontSize: 12, fontWeight: 500, margin: '0 0 3px', color: item.isAvailable ? 'var(--color-text-primary)' : '#9ca3af', textDecoration: item.isAvailable ? 'none' : 'line-through', lineHeight: 1.3 }}>{item.name}</p>
-                    {item.isAvailable
-                      ? <p style={{ fontSize: 13, fontWeight: 500, margin: 0, color }}>฿{item.price}</p>
-                      : <p style={{ fontSize: 11, fontWeight: 500, margin: 0, color: '#ef4444' }}>หมด</p>
-                    }
-                  </div>
-                </div>
-                <div style={{ padding: '0 10px 8px', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button onClick={() => toggleAvailable(item.id, item.isAvailable)}
-                    style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, border: item.isAvailable ? '0.5px solid #d1d5db' : `0.5px solid ${color}`, background: '#fff', cursor: 'pointer', color: item.isAvailable ? '#9ca3af' : color, fontWeight: 500 }}>
-                    {item.isAvailable ? 'ตั้งหมด' : 'มีอยู่'}
-                  </button>
-                </div>
-              </div>
-            ))}
+        {/* Main menu area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ background: '#fff', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '0.5px solid var(--color-border-tertiary)', flexShrink: 0 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาเมนู..."
+              style={{ flex: 1, background: '#f7f7f5', borderRadius: 8, border: 'none', padding: '7px 12px', fontSize: 13, color: 'var(--color-text-primary)', outline: 'none' }} />
+            {outOfStockCount > 0 && (
+              <span style={{ background: '#fee2e2', color: '#991b1b', fontSize: 11, padding: '4px 10px', borderRadius: 20, fontWeight: 500, whiteSpace: 'nowrap' }}>
+                {outOfStockCount} หมด
+              </span>
+            )}
           </div>
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div style={{ width: 300, background: '#fff', borderLeft: '0.5px solid var(--color-border-tertiary)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--color-border-tertiary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <select value={selectedTable?.id ?? ''} onChange={e => setSelectedTable(tables.find(t => t.id === e.target.value) ?? null)}
-              style={{ flex: 1, fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '0.5px solid var(--color-border-secondary)', background: '#fff', color: 'var(--color-text-primary)' }}>
-              {tables.map(t => <option key={t.id} value={t.id}>โต๊ะ {t.tableNumber}</option>)}
-            </select>
-            <div style={{ fontSize: 13, fontWeight: 500, color, whiteSpace: 'nowrap' }}>฿{tableTotal}</div>
-          </div>
-          {paymentPending && (
-            <div style={{ background: '#f3e8ff', color: '#7e22ce', fontSize: 11, fontWeight: 500, padding: '6px 10px', borderRadius: 8, marginBottom: 8, textAlign: 'center' }}>
-              💳 ลูกค้าขอชำระเงิน
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 4 }}>
-            {([
-              { key: 'cart', label: cartCount > 0 ? `ตะกร้า (${cartCount})` : 'ตะกร้า' },
-              { key: 'order', label: tableOrders.length > 0 ? `ออเดอร์ (${tableOrders.length})` : 'ออเดอร์' },
-            ] as const).map(t => (
-              <button key={t.key} onClick={() => setRightTab(t.key)}
-                style={{ flex: 1, padding: '6px 4px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', background: rightTab === t.key ? color : '#f3f4f6', color: rightTab === t.key ? '#fff' : '#6b7280' }}>
-                {t.label}
+          <div style={{ background: '#fff', padding: '10px 16px', display: 'flex', gap: 8, borderBottom: '0.5px solid var(--color-border-tertiary)', overflowX: 'auto', scrollbarWidth: 'none', flexShrink: 0 }}>
+            {categories.map(cat => (
+              <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
+                style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', background: activeCategory === cat.id ? color : '#f3f4f6', color: activeCategory === cat.id ? '#fff' : '#6b7280' }}>
+                {cat.name}
               </button>
             ))}
           </div>
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px' }}>
-          {rightTab === 'cart' && (
-            cart.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 120 }}>
-                <p style={{ fontSize: 24, margin: '0 0 6px' }}>🛒</p>
-                <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0 }}>คลิกเมนูเพื่อเพิ่ม</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {cart.map(item => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
+              {filtered.map(item => (
+                <div key={item.id} style={{ background: '#fff', borderRadius: 14, border: '0.5px solid var(--color-border-tertiary)', overflow: 'hidden', opacity: item.isAvailable ? 1 : 0.55 }}>
+                  <div onClick={() => addToCart(item)} style={{ cursor: item.isAvailable ? 'pointer' : 'default' }}>
                     {item.imageUrl ? (
-                      <img src={item.imageUrl} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                      <img src={item.imageUrl} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
                     ) : (
-                      <div style={{ width: 34, height: 34, borderRadius: 8, background: '#f5f5f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🍽️</div>
+                      <div style={{ width: '100%', aspectRatio: '1/1', background: '#f5f5f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🍽️</div>
                     )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 12, fontWeight: 500, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
-                      <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: 0 }}>฿{item.price}</p>
+                    <div style={{ padding: '8px 10px 4px' }}>
+                      <p style={{ fontSize: 12, fontWeight: 500, margin: '0 0 3px', color: item.isAvailable ? 'var(--color-text-primary)' : '#9ca3af', textDecoration: item.isAvailable ? 'none' : 'line-through', lineHeight: 1.3 }}>{item.name}</p>
+                      {item.isAvailable
+                        ? <p style={{ fontSize: 13, fontWeight: 500, margin: 0, color }}>฿{item.price}</p>
+                        : <p style={{ fontSize: 11, fontWeight: 500, margin: 0, color: '#ef4444' }}>หมด</p>
+                      }
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <button onClick={() => updateQty(item.id, -1)} style={{ width: 20, height: 20, borderRadius: '50%', border: '0.5px solid var(--color-border-secondary)', background: '#fff', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)' }}>−</button>
-                      <span style={{ fontSize: 12, fontWeight: 500, minWidth: 14, textAlign: 'center' }}>{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} style={{ width: 20, height: 20, borderRadius: '50%', background: color, border: 'none', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>+</button>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 500, minWidth: 38, textAlign: 'right' }}>฿{item.price * item.qty}</span>
                   </div>
-                ))}
-              </div>
-            )
-          )}
-
-          {rightTab === 'order' && (
-            tableOrders.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 120 }}>
-                <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0 }}>ไม่มีออเดอร์ค้างอยู่</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {tableOrders.map(order => (
-                  <div key={order.id} style={{ background: STATUS_BG[order.status] ?? '#f3f4f6', borderRadius: 10, padding: '10px 12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 500, color: STATUS_TEXT[order.status] ?? '#6b7280', background: '#fff', padding: '2px 8px', borderRadius: 20 }}>
-                        {STATUS_TH[order.status] ?? order.status}
-                      </span>
-                      <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{timeAgo(order.createdAt)}</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
-                      {order.items.map(item => (
-                        <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 12, flex: 1, color: item.isCancelled ? '#9ca3af' : 'var(--color-text-primary)', textDecoration: item.isCancelled ? 'line-through' : 'none' }}>
-                            × {item.qty} {item.name}
-                          </span>
-                          {!['PAID', 'CANCELLED'].includes(order.status) && (
-                            <button onClick={() => toggleItemCancel(item.id)}
-                              style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, border: item.isCancelled ? `0.5px solid ${color}` : '0.5px solid #fca5a5', background: '#fff', cursor: 'pointer', color: item.isCancelled ? color : '#ef4444', fontWeight: 500 }}>
-                              {item.isCancelled ? 'คืน' : 'ยกเลิก'}
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    {!['PAID', 'CANCELLED'].includes(order.status) && (
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {order.status === 'PENDING' && (
-                          <button onClick={() => updateOrderStatus(order.id, 'COOKING')}
-                            style={{ flex: 1, padding: '5px', borderRadius: 6, border: 'none', background: '#dbeafe', color: '#1e40af', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>เริ่มทำ</button>
-                        )}
-                        {order.status === 'COOKING' && (
-                          <button onClick={() => updateOrderStatus(order.id, 'SERVED')}
-                            style={{ flex: 1, padding: '5px', borderRadius: 6, border: 'none', background: '#dcfce7', color: '#166534', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>เสิร์ฟแล้ว</button>
-                        )}
-                        {(order.status === 'SERVED' || order.status === 'REQUESTING_PAYMENT') && (
-                          <button onClick={() => updateOrderStatus(order.id, 'PAID')}
-                            style={{ flex: 1, padding: '5px', borderRadius: 6, border: 'none', background: '#f3e8ff', color: '#7e22ce', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>ยืนยันชำระ ✓</button>
-                        )}
-                        <button onClick={() => { if (confirm('ยกเลิกออเดอร์?')) updateOrderStatus(order.id, 'CANCELLED') }}
-                          style={{ padding: '5px 8px', borderRadius: 6, border: 'none', background: '#fee2e2', color: '#ef4444', fontSize: 11, cursor: 'pointer' }}>ยกเลิก</button>
-                      </div>
-                    )}
+                  <div style={{ padding: '0 10px 8px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button onClick={() => toggleAvailable(item.id, item.isAvailable)}
+                      style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, border: item.isAvailable ? '0.5px solid #d1d5db' : `0.5px solid ${color}`, background: '#fff', cursor: 'pointer', color: item.isAvailable ? '#9ca3af' : color, fontWeight: 500 }}>
+                      {item.isAvailable ? 'ตั้งหมด' : 'มีอยู่'}
+                    </button>
                   </div>
-                ))}
-              </div>
-            )
-          )}
-        </div>
-
-        <div style={{ padding: '12px 16px', borderTop: '0.5px solid var(--color-border-tertiary)' }}>
-          {successMsg && (
-            <div style={{ background: '#dcfce7', color: '#166534', fontSize: 12, fontWeight: 500, textAlign: 'center', padding: '7px', borderRadius: 8, marginBottom: 8 }}>
-              ✓ {successMsg}
+                </div>
+              ))}
             </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 500, marginBottom: 10 }}>
-            <span>ยอดรวมทั้งหมด</span>
-            <span style={{ color }}>฿{tableTotal}</span>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={printReceipt}
-              style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 500, border: `1px solid ${color}`, color, background: '#fff', cursor: 'pointer' }}>
-              🖨️ ใบเสร็จ
-            </button>
-            <button onClick={submitOrder} disabled={!cart.length || !selectedTable || submitting}
-              style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 500, border: 'none', background: cart.length && !submitting ? color : '#d1d5db', color: '#fff', cursor: cart.length ? 'pointer' : 'not-allowed' }}>
-              {submitting ? 'กำลังส่ง...' : 'ส่งออเดอร์'}
-            </button>
           </div>
         </div>
+
+        {/* Right panel */}
+        <div style={{ width: 300, background: '#fff', borderLeft: '0.5px solid var(--color-border-tertiary)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--color-border-tertiary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <select value={selectedTable?.id ?? ''} onChange={e => setSelectedTable(tables.find(t => t.id === e.target.value) ?? null)}
+                style={{ flex: 1, fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '0.5px solid var(--color-border-secondary)', background: '#fff', color: 'var(--color-text-primary)' }}>
+                {tables.map(t => <option key={t.id} value={t.id}>โต๊ะ {t.tableNumber}</option>)}
+              </select>
+              <div style={{ fontSize: 13, fontWeight: 500, color, whiteSpace: 'nowrap' }}>฿{tableTotal}</div>
+            </div>
+            {paymentPending && (
+              <div style={{ background: '#f3e8ff', color: '#7e22ce', fontSize: 11, fontWeight: 500, padding: '6px 10px', borderRadius: 8, marginBottom: 8, textAlign: 'center' }}>
+                💳 ลูกค้าขอชำระเงิน
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 4 }}>
+              {([
+                { key: 'cart', label: cartCount > 0 ? `ตะกร้า (${cartCount})` : 'ตะกร้า' },
+                { key: 'order', label: tableOrders.length > 0 ? `ออเดอร์ (${tableOrders.length})` : 'ออเดอร์' },
+              ] as const).map(t => (
+                <button key={t.key} onClick={() => setRightTab(t.key)}
+                  style={{ flex: 1, padding: '6px 4px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', background: rightTab === t.key ? color : '#f3f4f6', color: rightTab === t.key ? '#fff' : '#6b7280' }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px' }}>
+            {rightTab === 'cart' && (
+              cart.length === 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+                  <p style={{ fontSize: 24, margin: '0 0 6px' }}>🛒</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0 }}>คลิกเมนูเพื่อเพิ่ม</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {cart.map(item => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 34, height: 34, borderRadius: 8, background: '#f5f5f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🍽️</div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 12, fontWeight: 500, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
+                        <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: 0 }}>฿{item.price}</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <button onClick={() => updateQty(item.id, -1)} style={{ width: 20, height: 20, borderRadius: '50%', border: '0.5px solid var(--color-border-secondary)', background: '#fff', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)' }}>−</button>
+                        <span style={{ fontSize: 12, fontWeight: 500, minWidth: 14, textAlign: 'center' }}>{item.qty}</span>
+                        <button onClick={() => updateQty(item.id, 1)} style={{ width: 20, height: 20, borderRadius: '50%', background: color, border: 'none', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>+</button>
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 500, minWidth: 38, textAlign: 'right' }}>฿{item.price * item.qty}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {rightTab === 'order' && (
+              tableOrders.length === 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0 }}>ไม่มีออเดอร์ค้างอยู่</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {tableOrders.map(order => (
+                    <div key={order.id} style={{ background: STATUS_BG[order.status] ?? '#f3f4f6', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 500, color: STATUS_TEXT[order.status] ?? '#6b7280', background: '#fff', padding: '2px 8px', borderRadius: 20 }}>
+                          {STATUS_TH[order.status] ?? order.status}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{timeAgo(order.createdAt)}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+                        {order.items.map(item => (
+                          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 12, flex: 1, color: item.isCancelled ? '#9ca3af' : 'var(--color-text-primary)', textDecoration: item.isCancelled ? 'line-through' : 'none' }}>
+                              × {item.qty} {item.name}
+                            </span>
+                            {!['PAID', 'CANCELLED'].includes(order.status) && (
+                              <button onClick={() => toggleItemCancel(item.id)}
+                                style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, border: item.isCancelled ? `0.5px solid ${color}` : '0.5px solid #fca5a5', background: '#fff', cursor: 'pointer', color: item.isCancelled ? color : '#ef4444', fontWeight: 500 }}>
+                                {item.isCancelled ? 'คืน' : 'ยกเลิก'}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {!['PAID', 'CANCELLED'].includes(order.status) && (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {order.status === 'PENDING' && (
+                            <button onClick={() => updateOrderStatus(order.id, 'COOKING')}
+                              style={{ flex: 1, padding: '5px', borderRadius: 6, border: 'none', background: '#dbeafe', color: '#1e40af', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>เริ่มทำ</button>
+                          )}
+                          {order.status === 'COOKING' && (
+                            <button onClick={() => updateOrderStatus(order.id, 'SERVED')}
+                              style={{ flex: 1, padding: '5px', borderRadius: 6, border: 'none', background: '#dcfce7', color: '#166534', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>เสิร์ฟแล้ว</button>
+                          )}
+                          {(order.status === 'SERVED' || order.status === 'REQUESTING_PAYMENT') && (
+                            <button onClick={() => updateOrderStatus(order.id, 'PAID')}
+                              style={{ flex: 1, padding: '5px', borderRadius: 6, border: 'none', background: '#f3e8ff', color: '#7e22ce', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>ยืนยันชำระ ✓</button>
+                          )}
+                          <button onClick={() => { if (confirm('ยกเลิกออเดอร์?')) updateOrderStatus(order.id, 'CANCELLED') }}
+                            style={{ padding: '5px 8px', borderRadius: 6, border: 'none', background: '#fee2e2', color: '#ef4444', fontSize: 11, cursor: 'pointer' }}>ยกเลิก</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+          </div>
+
+          <div style={{ padding: '12px 16px', borderTop: '0.5px solid var(--color-border-tertiary)' }}>
+            {successMsg && (
+              <div style={{ background: '#dcfce7', color: '#166534', fontSize: 12, fontWeight: 500, textAlign: 'center', padding: '7px', borderRadius: 8, marginBottom: 8 }}>
+                ✓ {successMsg}
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 500, marginBottom: 10 }}>
+              <span>ยอดรวมทั้งหมด</span>
+              <span style={{ color }}>฿{tableTotal}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={printReceipt}
+                style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 500, border: `1px solid ${color}`, color, background: '#fff', cursor: 'pointer' }}>
+                🖨️ ใบเสร็จ
+              </button>
+              <button onClick={submitOrder} disabled={!cart.length || !selectedTable || submitting}
+                style={{ flex: 1, padding: '9px', borderRadius: 10, fontSize: 12, fontWeight: 500, border: 'none', background: cart.length && !submitting ? color : '#d1d5db', color: '#fff', cursor: cart.length ? 'pointer' : 'not-allowed' }}>
+                {submitting ? 'กำลังส่ง...' : 'ส่งออเดอร์'}
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </AdminLayout>
   )
