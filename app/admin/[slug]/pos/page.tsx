@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useEffect, useState, useCallback, useMemo } from 'react'
-import Link from 'next/link'
+import AdminLayout from '../AdminLayout'
 
 type MenuItem = { id: string; name: string; price: number; imageUrl: string | null; isAvailable: boolean; category: { id: string; name: string } }
 type Category = { id: string; name: string; items: any[] }
@@ -183,48 +183,18 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
     return `${Math.floor(diff / 3600)} ชม.`
   }
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--color-text-secondary)' }}>
-      กำลังโหลด...
-    </div>
+
+  if (loading || !store) return (
+    <AdminLayout slug={slug} color="#f97316" storeName="...">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--color-text-secondary)' }}>
+        กำลังโหลด...
+      </div>
+    </AdminLayout>
   )
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f7f7f5', fontFamily: 'var(--font-sans)' }}>
-
-      {/* Sidebar */}
-      <div style={{ width: 68, background: '#1a1a1a', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', gap: 4, flexShrink: 0 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 500, marginBottom: 12 }}>
-          {store?.name[0]}
-        </div>
-        {([
-          { icon: '🍽️', label: 'POS', href: null, active: true },
-          { icon: '📋', label: 'เมนู', href: `/admin/${slug}/menu` },
-          { icon: '📱', label: 'QR', href: `/admin/${slug}/qr` },
-          { icon: '🍳', label: 'ครัว', href: `/kitchen/${slug}` },
-        ] as const).map(nav => (
-          nav.href ? (
-            <Link key={nav.label} href={nav.href} target="_blank"
-              style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none' }}>
-              <span style={{ fontSize: 18 }}>{nav.icon}</span>
-              <span style={{ fontSize: 9, color: '#9ca3af' }}>{nav.label}</span>
-            </Link>
-          ) : (
-            <div key={nav.label} style={{ width: 48, height: 48, borderRadius: 12, background: color, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-              <span style={{ fontSize: 18 }}>{nav.icon}</span>
-              <span style={{ fontSize: 9, color: '#fff' }}>{nav.label}</span>
-            </div>
-          )
-        ))}
-        <div style={{ flex: 1 }} />
-        <Link href={`/admin/${slug}`}
-          style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none' }}>
-          <span style={{ fontSize: 18 }}>⚙️</span>
-          <span style={{ fontSize: 9, color: '#9ca3af' }}>ตั้งค่า</span>
-        </Link>
-      </div>
-
-      {/* Main */}
+    <AdminLayout slug={slug} color={color} storeName={store.name}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ background: '#fff', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '0.5px solid var(--color-border-tertiary)', flexShrink: 0 }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาเมนู..."
@@ -413,5 +383,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
         </div>
       </div>
     </div>
+      </div>
+    </AdminLayout>
   )
 }
