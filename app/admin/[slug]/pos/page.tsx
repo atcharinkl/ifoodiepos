@@ -194,6 +194,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
 
   return (
     <AdminLayout slug={slug} color={color} storeName={store.name}>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ background: '#fff', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '0.5px solid var(--color-border-tertiary)', flexShrink: 0 }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาเมนู..."
