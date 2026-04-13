@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useEffect, useState, useCallback, useRef } from 'react'
-import Link from 'next/link'
+import AdminLayout from '../AdminLayout'
 
 type MenuItem = { id: string; name: string; description: string | null; price: number; imageUrl: string | null; isAvailable: boolean }
 type Category = { id: string; name: string; items: MenuItem[] }
@@ -114,15 +114,16 @@ export default function MenuPage({ params }: { params: Promise<{ slug: string }>
 
   const activeCat = categories.find(c => c.id === activeCategory)
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--color-text-secondary)' }}>
-      กำลังโหลด...
-    </div>
+  if (loading || !store) return (
+    <AdminLayout slug={slug} color="#f97316" storeName="...">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--color-text-secondary)' }}>
+        กำลังโหลด...
+      </div>
+    </AdminLayout>
   )
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f7f7f5', fontFamily: 'var(--font-sans)' }}>
-
+    <AdminLayout slug={slug} color={color} storeName={store.name}>
       {/* Edit modal */}
       {editItem && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
@@ -237,123 +238,91 @@ export default function MenuPage({ params }: { params: Promise<{ slug: string }>
         </div>
       )}
 
-      {/* Sidebar */}
-      <div style={{ width: 68, background: '#1a1a1a', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', gap: 4, flexShrink: 0 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 500, marginBottom: 12 }}>
-          {store?.name[0]}
-        </div>
-        {([
-          { icon: '🍽️', label: 'POS', href: `/admin/${slug}/pos` },
-          { icon: '📋', label: 'เมนู', href: null, active: true },
-          { icon: '📱', label: 'QR', href: `/admin/${slug}/qr` },
-          { icon: '🍳', label: 'ครัว', href: `/kitchen/${slug}` },
-        ] as const).map(nav => (
-          nav.href ? (
-            <Link key={nav.label} href={nav.href} target={nav.label === 'ครัว' || nav.label === 'QR' ? '_blank' : '_self'}
-              style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none' }}>
-              <span style={{ fontSize: 18 }}>{nav.icon}</span>
-              <span style={{ fontSize: 9, color: '#9ca3af' }}>{nav.label}</span>
-            </Link>
-          ) : (
-            <div key={nav.label} style={{ width: 48, height: 48, borderRadius: 12, background: color, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-              <span style={{ fontSize: 18 }}>{nav.icon}</span>
-              <span style={{ fontSize: 9, color: '#fff' }}>{nav.label}</span>
+      {/* Content: Category sidebar + Main */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* Category sidebar */}
+        <div style={{ width: 180, background: '#fff', borderRight: '0.5px solid var(--color-border-tertiary)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--color-border-tertiary)' }}>
+            <p style={{ fontSize: 13, fontWeight: 500, margin: '0 0 8px', color: 'var(--color-text-primary)' }}>หมวดหมู่</p>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input value={newCatName} onChange={e => setNewCatName(e.target.value)}
+                placeholder="ชื่อหมวดหมู่..."
+                style={{ flex: 1, padding: '6px 8px', borderRadius: 8, border: '0.5px solid var(--color-border-secondary)', fontSize: 12, color: 'var(--color-text-primary)', background: '#fff', outline: 'none' }} />
+              <button onClick={addCategory} disabled={saving}
+                style={{ padding: '6px 8px', borderRadius: 8, border: 'none', background: color, color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>+</button>
             </div>
-          )
-        ))}
-        <div style={{ flex: 1 }} />
-        <Link href={`/admin/${slug}`}
-          style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none' }}>
-          <span style={{ fontSize: 18 }}>⚙️</span>
-          <span style={{ fontSize: 9, color: '#9ca3af' }}>ตั้งค่า</span>
-        </Link>
-      </div>
-
-      {/* Category sidebar */}
-      <div style={{ width: 180, background: '#fff', borderRight: '0.5px solid var(--color-border-tertiary)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--color-border-tertiary)' }}>
-          <p style={{ fontSize: 13, fontWeight: 500, margin: '0 0 8px', color: 'var(--color-text-primary)' }}>หมวดหมู่</p>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input value={newCatName} onChange={e => setNewCatName(e.target.value)}
-              placeholder="ชื่อหมวดหมู่..."
-              style={{ flex: 1, padding: '6px 8px', borderRadius: 8, border: '0.5px solid var(--color-border-secondary)', fontSize: 12, color: 'var(--color-text-primary)', background: '#fff', outline: 'none' }} />
-            <button onClick={addCategory} disabled={saving}
-              style={{ padding: '6px 8px', borderRadius: 8, border: 'none', background: color, color: '#fff', fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>+</button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+            {categories.map(cat => (
+              <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
+                style={{ width: '100%', textAlign: 'left', padding: '9px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: activeCategory === cat.id ? 500 : 400, background: activeCategory === cat.id ? color + '15' : '#fff', color: activeCategory === cat.id ? color : 'var(--color-text-primary)', borderRight: activeCategory === cat.id ? `2px solid ${color}` : '2px solid transparent' }}>
+                {cat.name}
+                <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginLeft: 6 }}>({cat.items.length})</span>
+              </button>
+            ))}
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-          {categories.map(cat => (
-            <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
-              style={{ width: '100%', textAlign: 'left', padding: '9px 16px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: activeCategory === cat.id ? 500 : 400, background: activeCategory === cat.id ? color + '15' : '#fff', color: activeCategory === cat.id ? color : 'var(--color-text-primary)', borderRight: activeCategory === cat.id ? `2px solid ${color}` : '2px solid transparent' }}>
-              {cat.name}
-              <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginLeft: 6 }}>({cat.items.length})</span>
+
+        {/* Main content */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ background: '#fff', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '0.5px solid var(--color-border-tertiary)', flexShrink: 0 }}>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 500, margin: 0, color: 'var(--color-text-primary)' }}>{activeCat?.name ?? 'เมนูทั้งหมด'}</p>
+              <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0 }}>{activeCat?.items.length ?? 0} รายการ</p>
+            </div>
+            <button onClick={() => { setNewItem(p => ({ ...p, categoryId: activeCategory })); setShowAddItem(true) }}
+              style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: color, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+              + เพิ่มเมนู
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Topbar */}
-        <div style={{ background: '#fff', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '0.5px solid var(--color-border-tertiary)', flexShrink: 0 }}>
-          <div>
-            <p style={{ fontSize: 15, fontWeight: 500, margin: 0, color: 'var(--color-text-primary)' }}>{activeCat?.name ?? 'เมนูทั้งหมด'}</p>
-            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0 }}>{activeCat?.items.length ?? 0} รายการ</p>
           </div>
-          <button onClick={() => { setNewItem(p => ({ ...p, categoryId: activeCategory })); setShowAddItem(true) }}
-            style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: color, color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-            + เพิ่มเมนู
-          </button>
-        </div>
-
-        {/* Menu list */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {!activeCat || activeCat.items.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-              <p style={{ fontSize: 32, margin: '0 0 8px' }}>🍽️</p>
-              <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>ยังไม่มีเมนูในหมวดนี้</p>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
-              {activeCat.items.map(item => (
-                <div key={item.id} style={{ background: '#fff', borderRadius: 16, border: '0.5px solid var(--color-border-tertiary)', overflow: 'hidden', opacity: item.isAvailable ? 1 : 0.7 }}>
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
-                  ) : (
-                    <div style={{ width: '100%', aspectRatio: '1/1', background: '#f5f5f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>🍽️</div>
-                  )}
-                  <div style={{ padding: '12px 14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <p style={{ fontSize: 14, fontWeight: 500, margin: 0, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>{item.name}</p>
-                      {!item.isAvailable && (
-                        <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 20, background: '#fee2e2', color: '#991b1b', flexShrink: 0, marginLeft: 6 }}>หมด</span>
-                      )}
-                    </div>
-                    {item.description && (
-                      <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>{item.description}</p>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+            {!activeCat || activeCat.items.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200 }}>
+                <p style={{ fontSize: 32, margin: '0 0 8px' }}>🍽️</p>
+                <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>ยังไม่มีเมนูในหมวดนี้</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
+                {activeCat.items.map(item => (
+                  <div key={item.id} style={{ background: '#fff', borderRadius: 16, border: '0.5px solid var(--color-border-tertiary)', overflow: 'hidden', opacity: item.isAvailable ? 1 : 0.7 }}>
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} />
+                    ) : (
+                      <div style={{ width: '100%', aspectRatio: '1/1', background: '#f5f5f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>🍽️</div>
                     )}
-                    <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 12px', color }}> ฿{Number(item.price)}</p>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => { setEditItem(item); setEditForm({ name: item.name, description: item.description ?? '', price: String(item.price), imageUrl: item.imageUrl ?? '' }) }}
-                        style={{ flex: 1, padding: '7px', borderRadius: 8, border: '0.5px solid var(--color-border-secondary)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--color-text-primary)', fontWeight: 500 }}>
-                        แก้ไข
-                      </button>
-                      <button onClick={() => toggleAvailable(item.id, item.isAvailable)}
-                        style={{ flex: 1, padding: '7px', borderRadius: 8, border: item.isAvailable ? '0.5px solid #d1d5db' : `0.5px solid ${color}`, background: '#fff', fontSize: 12, cursor: 'pointer', color: item.isAvailable ? '#6b7280' : color, fontWeight: 500 }}>
-                        {item.isAvailable ? 'ตั้งหมด' : 'มีอยู่'}
-                      </button>
-                      <button onClick={() => deleteItem(item.id)}
-                        style={{ padding: '7px 10px', borderRadius: 8, border: '0.5px solid #fca5a5', background: '#fff', fontSize: 12, cursor: 'pointer', color: '#ef4444' }}>
-                        ลบ
-                      </button>
+                    <div style={{ padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <p style={{ fontSize: 14, fontWeight: 500, margin: 0, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>{item.name}</p>
+                        {!item.isAvailable && (
+                          <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 20, background: '#fee2e2', color: '#991b1b', flexShrink: 0, marginLeft: 6 }}>หมด</span>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>{item.description}</p>
+                      )}
+                      <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 12px', color }}> ฿{Number(item.price)}</p>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => { setEditItem(item); setEditForm({ name: item.name, description: item.description ?? '', price: String(item.price), imageUrl: item.imageUrl ?? '' }) }}
+                          style={{ flex: 1, padding: '7px', borderRadius: 8, border: '0.5px solid var(--color-border-secondary)', background: '#fff', fontSize: 12, cursor: 'pointer', color: 'var(--color-text-primary)', fontWeight: 500 }}>
+                          แก้ไข
+                        </button>
+                        <button onClick={() => toggleAvailable(item.id, item.isAvailable)}
+                          style={{ flex: 1, padding: '7px', borderRadius: 8, border: item.isAvailable ? '0.5px solid #d1d5db' : `0.5px solid ${color}`, background: '#fff', fontSize: 12, cursor: 'pointer', color: item.isAvailable ? '#6b7280' : color, fontWeight: 500 }}>
+                          {item.isAvailable ? 'ตั้งหมด' : 'มีอยู่'}
+                        </button>
+                        <button onClick={() => deleteItem(item.id)}
+                          style={{ padding: '7px 10px', borderRadius: 8, border: '0.5px solid #fca5a5', background: '#fff', fontSize: 12, cursor: 'pointer', color: '#ef4444' }}>
+                          ลบ
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }
