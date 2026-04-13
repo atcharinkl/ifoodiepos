@@ -10,6 +10,7 @@ const NAV = [
   { icon: '📋', label: 'เมนู', path: 'menu' },
   { icon: '📱', label: 'QR', path: 'qr' },
   { icon: '🍳', label: 'ครัว', path: 'kitchen' },
+  { icon: '⚙️', label: 'ตั้งค่า', path: 'settings' },
 ]
 
 export default function AdminLayout({ slug, color, storeName, children }: Props) {
@@ -32,12 +33,6 @@ export default function AdminLayout({ slug, color, storeName, children }: Props)
             </Link>
           )
         })}
-        <div style={{ flex: 1 }} />
-        <Link href={`/admin/${slug}`}
-          style={{ width: 48, height: 48, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textDecoration: 'none' }}>
-          <span style={{ fontSize: 18 }}>⚙️</span>
-          <span style={{ fontSize: 9, color: '#9ca3af' }}>ตั้งค่า</span>
-        </Link>
       </div>
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {children}
