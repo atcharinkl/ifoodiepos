@@ -382,8 +382,6 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
           </div>
         </div>
       </div>
-    </div>
-      </div>
     </AdminLayout>
   )
 }
