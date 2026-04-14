@@ -77,6 +77,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
       const pc = list.filter((o: Order) => o.status === 'REQUESTING_PAYMENT').length
       const payingOrders = list.filter((o: Order) => o.status === 'REQUESTING_PAYMENT')
       const newPayingOrder = payingOrders.find((o: Order) => !prevPaymentOrders.current.has(o.id))
+      console.log('paying orders:', payingOrders.length, 'new:', !!newPayingOrder, 'ctx:', !!audioCtxRef.current)
       if (newPayingOrder) {
         setPaymentModal({ tableNumber: newPayingOrder.table.tableNumber, orderId: newPayingOrder.id })
         getAudioCtx().then(ctx => {
@@ -336,15 +337,18 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
                 const next = !soundEnabled
                 setSoundEnabled(next)
                 localStorage.setItem('pos-sound', String(next))
+                console.log('toggle sound:', next)
                 if (next) {
                   try {
                     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
                     const ctx = new AudioCtx()
+                    console.log('ctx state:', ctx.state)
                     await ctx.resume()
+                    console.log('ctx state after resume:', ctx.state)
                     audioCtxRef.current = ctx
                     playBeep(ctx, 880, ctx.currentTime)
                     playBeep(ctx, 880, ctx.currentTime + 0.2)
-                  } catch (e) {}
+                  } catch (e) { console.error('audio error:', e) }
                 } else {
                   audioCtxRef.current = null
                 }
