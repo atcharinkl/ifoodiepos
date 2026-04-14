@@ -339,16 +339,13 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
                 const next = !soundEnabled
                 setSoundEnabled(next)
                 localStorage.setItem('pos-sound', String(next))
-                try {
-                  const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-                  const ctx = new AudioCtx()
-                  await ctx.resume()
-                  audioCtxRef.current = ctx
-                  if (next) {
+                if (next) {
+                  const ctx = await getAudioCtx()
+                  if (ctx) {
                     playBeep(ctx, 880, ctx.currentTime)
                     playBeep(ctx, 880, ctx.currentTime + 0.2)
                   }
-                } catch (e) {}
+                }
               }}
               style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: soundEnabled ? '#22c55e' : '#e5e7eb', color: soundEnabled ? '#fff' : '#6b7280', fontWeight: 500 }}>
               {soundEnabled ? '🔔 เสียงเปิด' : '🔕 เสียงปิด'}
