@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState, useCallback, useRef } from 'react'
 import AdminLayout from '../AdminLayout'
-import { useNotificationSound } from '@/lib/useSound'
 
 type OrderItem = { id: string; name: string; qty: number; isCancelled: boolean }
 type Order = { id: string; status: 'PENDING' | 'COOKING'; createdAt: string; table: { tableNumber: number }; items: OrderItem[] }
@@ -19,14 +18,60 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState(new Date())
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('kitchen-sound') !== 'false'
-  })
+  const [soundEnabled, setSoundEnabled] = useState(false)
   const prevOrderIds = useRef<Set<string>>(new Set())
-  const { playNewOrder } = useNotificationSound()
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
+  useEffect(() => {
+    setSoundEnabled(localStorage.getItem('kitchen-sound') !== 'false')
+  }, [])
 
   const color = store?.themeColor ?? '#f97316'
+
+  function playBeep(ctx: AudioContext, freq: number, startTime: number) {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = freq
+    osc.type = 'sine'
+    gain.gain.setValueAtTime(0.3, startTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15)
+    osc.start(startTime)
+    osc.stop(startTime + 0.15)
+  }
+
+  async function getAudioCtx(): Promise<AudioContext | null> {
+    try {
+      if (!audioCtxRef.current) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+        audioCtxRef.current = new AudioCtx()
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        await audioCtxRef.current.resume()
+      }
+      return audioCtxRef.current
+    } catch (e) {
+      return null
+    }
+  }
+
+  async function toggleSound() {
+    const next = !soundEnabled
+    setSoundEnabled(next)
+    localStorage.setItem('kitchen-sound', String(next))
+    // เล่นเสียง test ทันทีตอนกด (ต้องอยู่ใน user gesture)
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      const ctx = new AudioCtx()
+      await ctx.resume()
+      audioCtxRef.current = ctx
+      if (next) {
+        playBeep(ctx, 880, ctx.currentTime)
+        playBeep(ctx, 880, ctx.currentTime + 0.2)
+      }
+    } catch (e) {}
+  }
 
   const fetchOrders = useCallback(async () => {
     const res = await fetch(`/api/kitchen/${slug}/orders`)
@@ -35,14 +80,20 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
       const newOrders: Order[] = data.orders
       if (soundEnabled && prevOrderIds.current.size > 0) {
         const hasNew = newOrders.some(o => !prevOrderIds.current.has(o.id))
-        if (hasNew) playNewOrder()
+        if (hasNew) {
+          const ctx = await getAudioCtx()
+          if (ctx) {
+            playBeep(ctx, 880, ctx.currentTime)
+            playBeep(ctx, 880, ctx.currentTime + 0.2)
+          }
+        }
       }
       prevOrderIds.current = new Set(newOrders.map(o => o.id))
       setOrders(newOrders)
       setLastUpdate(new Date())
     }
     setLoading(false)
-  }, [slug, soundEnabled, playNewOrder])
+  }, [slug, soundEnabled])
 
   useEffect(() => {
     fetch(`/api/admin/${slug}/tables`).then(r => r.json()).then(d => setStore(d.store))
@@ -60,13 +111,6 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
     })
     await fetchOrders()
     setUpdating(null)
-  }
-
-  function toggleSound() {
-    const next = !soundEnabled
-    setSoundEnabled(next)
-    localStorage.setItem('kitchen-sound', String(next))
-    playNewOrder()
   }
 
   function timeAgo(dateStr: string) {
