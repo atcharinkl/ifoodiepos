@@ -346,6 +346,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
                     await ctx.resume()
                     console.log('ctx state after resume:', ctx.state)
                     audioCtxRef.current = ctx
+                    prevPaymentOrders.current = new Set() // reset เพื่อ detect ใหม่
                     playBeep(ctx, 880, ctx.currentTime)
                     playBeep(ctx, 880, ctx.currentTime + 0.2)
                   } catch (e) { console.error('audio error:', e) }
