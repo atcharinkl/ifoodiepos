@@ -3,17 +3,20 @@ import { useRef, useCallback } from 'react'
 export function useNotificationSound() {
   const audioCtx = useRef<AudioContext | null>(null)
 
-  const getCtx = useCallback(() => {
+  const getCtx = useCallback(async () => {
     if (!audioCtx.current) {
       audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+    if (audioCtx.current.state === 'suspended') {
+      await audioCtx.current.resume()
     }
     return audioCtx.current
   }, [])
 
-  // เสียง beep สั้นๆ 2 ครั้ง สำหรับออเดอร์ใหม่
-  const playNewOrder = useCallback(() => {
+  const playNewOrder = useCallback(async () => {
     try {
-      const ctx = getCtx()
+      const ctx = await getCtx()
+      console.log('playNewOrder called, state:', ctx.state)
       const playBeep = (startTime: number) => {
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
@@ -28,13 +31,14 @@ export function useNotificationSound() {
       }
       playBeep(ctx.currentTime)
       playBeep(ctx.currentTime + 0.2)
-    } catch (e) {}
+    } catch (e) {
+      console.error('sound error', e)
+    }
   }, [getCtx])
 
-  // เสียงสูงขึ้น สำหรับลูกค้าขอชำระ
-  const playPaymentRequest = useCallback(() => {
+  const playPaymentRequest = useCallback(async () => {
     try {
-      const ctx = getCtx()
+      const ctx = await getCtx()
       const playBeep = (startTime: number, freq: number) => {
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
@@ -50,7 +54,9 @@ export function useNotificationSound() {
       playBeep(ctx.currentTime, 660)
       playBeep(ctx.currentTime + 0.25, 880)
       playBeep(ctx.currentTime + 0.5, 1100)
-    } catch (e) {}
+    } catch (e) {
+      console.error('sound error', e)
+    }
   }, [getCtx])
 
   return { playNewOrder, playPaymentRequest }
