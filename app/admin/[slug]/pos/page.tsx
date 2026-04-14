@@ -30,7 +30,10 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
   const [successMsg, setSuccessMsg] = useState('')
   const [rightTab, setRightTab] = useState<'cart' | 'order'>('cart')
   const [orders, setOrders] = useState<Order[]>([])
-  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('pos-sound') !== 'false'
+  })
   const prevPaymentCount = useRef(0)
   const { playNewOrder, playPaymentRequest } = useNotificationSound()
 
@@ -267,7 +270,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
               <div style={{ fontSize: 13, fontWeight: 500, color, whiteSpace: 'nowrap' }}>฿{tableTotal}</div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-            <button onClick={() => { setSoundEnabled(v => !v); playNewOrder() }}
+            <button onClick={() => { const next = !soundEnabled; setSoundEnabled(next); localStorage.setItem('pos-sound', String(next)); playNewOrder() }}
               style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: soundEnabled ? '#22c55e' : '#e5e7eb', color: soundEnabled ? '#fff' : '#6b7280', fontWeight: 500 }}>
               {soundEnabled ? '🔔 เสียงเปิด' : '🔕 เสียงปิด'}
             </button>

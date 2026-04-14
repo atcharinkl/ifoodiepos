@@ -19,7 +19,10 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState(new Date())
-  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('kitchen-sound') !== 'false'
+  })
   const prevOrderIds = useRef<Set<string>>(new Set())
   const { playNewOrder } = useNotificationSound()
 
@@ -30,8 +33,6 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
     if (res.ok) {
       const data = await res.json()
       const newOrders: Order[] = data.orders
-
-      // เช็คออเดอร์ใหม่
       if (soundEnabled && prevOrderIds.current.size > 0) {
         const hasNew = newOrders.some(o => !prevOrderIds.current.has(o.id))
         if (hasNew) playNewOrder()
@@ -61,6 +62,13 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
     setUpdating(null)
   }
 
+  function toggleSound() {
+    const next = !soundEnabled
+    setSoundEnabled(next)
+    localStorage.setItem('kitchen-sound', String(next))
+    playNewOrder()
+  }
+
   function timeAgo(dateStr: string) {
     const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
     if (diff < 60) return `${diff} วิ`
@@ -84,8 +92,7 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
           <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>อัปเดตทุก 5 วินาที · {lastUpdate.toLocaleTimeString('th-TH')}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button
-            onClick={() => { setSoundEnabled(v => !v); playNewOrder() }}
+          <button onClick={toggleSound}
             style={{ fontSize: 11, padding: '4px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', background: soundEnabled ? '#22c55e' : '#374151', color: '#fff', fontWeight: 500 }}>
             {soundEnabled ? '🔔 เสียงเปิด' : '🔕 เสียงปิด'}
           </button>
