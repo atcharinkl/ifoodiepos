@@ -41,10 +41,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
 
   async function getAudioCtx(): Promise<AudioContext | null> {
     try {
-      if (!audioCtxRef.current) {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-        audioCtxRef.current = new AudioCtx()
-      }
+      if (!audioCtxRef.current) return null // ไม่สร้างใหม่ ต้องกดปุ่มก่อน
       if (audioCtxRef.current.state === 'suspended') {
         await audioCtxRef.current.resume()
       }
@@ -340,11 +337,16 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
                 setSoundEnabled(next)
                 localStorage.setItem('pos-sound', String(next))
                 if (next) {
-                  const ctx = await getAudioCtx()
-                  if (ctx) {
+                  try {
+                    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+                    const ctx = new AudioCtx()
+                    await ctx.resume()
+                    audioCtxRef.current = ctx
                     playBeep(ctx, 880, ctx.currentTime)
                     playBeep(ctx, 880, ctx.currentTime + 0.2)
-                  }
+                  } catch (e) {}
+                } else {
+                  audioCtxRef.current = null
                 }
               }}
               style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: soundEnabled ? '#22c55e' : '#e5e7eb', color: soundEnabled ? '#fff' : '#6b7280', fontWeight: 500 }}>
