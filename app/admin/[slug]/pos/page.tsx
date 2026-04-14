@@ -94,7 +94,7 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
       prevPaymentCount.current = pc
     }
     setOrders(list)
-  }, [slug])
+  }, [slug, soundEnabled])
 
   const fetchAll = useCallback(async () => {
     const [menuRes, tableRes] = await Promise.all([
