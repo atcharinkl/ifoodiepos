@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import AdminLayout from '../AdminLayout'
-import { useNotificationSound } from '@/lib/useSound'
 
 type MenuItem = { id: string; name: string; price: number; imageUrl: string | null; isAvailable: boolean; category: { id: string; name: string } }
 type Category = { id: string; name: string; items: any[] }
@@ -30,12 +29,41 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
   const [successMsg, setSuccessMsg] = useState('')
   const [rightTab, setRightTab] = useState<'cart' | 'order'>('cart')
   const [orders, setOrders] = useState<Order[]>([])
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('pos-sound') !== 'false'
-  })
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [paymentModal, setPaymentModal] = useState<{ tableNumber: number; orderId: string } | null>(null)
   const prevPaymentCount = useRef(0)
-  const { playNewOrder, playPaymentRequest } = useNotificationSound()
+  const prevPaymentOrders = useRef<Set<string>>(new Set())
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
+  useEffect(() => {
+    setSoundEnabled(localStorage.getItem('pos-sound') !== 'false')
+  }, [])
+
+  async function getAudioCtx(): Promise<AudioContext | null> {
+    try {
+      if (!audioCtxRef.current) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+        audioCtxRef.current = new AudioCtx()
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        await audioCtxRef.current.resume()
+      }
+      return audioCtxRef.current
+    } catch (e) { return null }
+  }
+
+  function playBeep(ctx: AudioContext, freq: number, startTime: number, duration = 0.15) {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.frequency.value = freq
+    osc.type = 'sine'
+    gain.gain.setValueAtTime(0.3, startTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
+    osc.start(startTime)
+    osc.stop(startTime + duration)
+  }
 
   const color = store?.themeColor ?? '#f97316'
 
@@ -50,7 +78,19 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
     const list = data.orders ?? []
     if (soundEnabled) {
       const pc = list.filter((o: Order) => o.status === 'REQUESTING_PAYMENT').length
-      if (pc > prevPaymentCount.current) playPaymentRequest()
+      const payingOrders = list.filter((o: Order) => o.status === 'REQUESTING_PAYMENT')
+      const newPayingOrder = payingOrders.find((o: Order) => !prevPaymentOrders.current.has(o.id))
+      if (newPayingOrder) {
+        setPaymentModal({ tableNumber: newPayingOrder.table.tableNumber, orderId: newPayingOrder.id })
+        getAudioCtx().then(ctx => {
+          if (ctx) {
+            playBeep(ctx, 660, ctx.currentTime)
+            playBeep(ctx, 880, ctx.currentTime + 0.25)
+            playBeep(ctx, 1100, ctx.currentTime + 0.5)
+          }
+        })
+      }
+      prevPaymentOrders.current = new Set(payingOrders.map((o: Order) => o.id))
       prevPaymentCount.current = pc
     }
     setOrders(list)
@@ -207,6 +247,31 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
   )
 
   return (
+
+      {/* Payment Modal */}
+      {paymentModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 24, padding: 32, maxWidth: 360, width: '100%', textAlign: 'center', boxShadow: '0 25px 50px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>💳</div>
+            <p style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px', color: '#1a1a1a' }}>โต๊ะ {paymentModal.tableNumber}</p>
+            <p style={{ fontSize: 16, color: '#7e22ce', fontWeight: 500, margin: '0 0 24px' }}>ลูกค้าขอชำระเงิน</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setPaymentModal(null)}
+                style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', fontSize: 14, cursor: 'pointer', color: '#6b7280', fontWeight: 500 }}>
+                รับทราบ
+              </button>
+              <button onClick={() => {
+                setSelectedTable(tables.find(t => t.tableNumber === paymentModal.tableNumber) ?? null)
+                setRightTab('order')
+                setPaymentModal(null)
+              }}
+                style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: '#7e22ce', fontSize: 14, cursor: 'pointer', color: '#fff', fontWeight: 500 }}>
+                ไปที่โต๊ะ →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     <AdminLayout slug={slug} color={color} storeName={store.name}>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
@@ -270,7 +335,21 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
               <div style={{ fontSize: 13, fontWeight: 500, color, whiteSpace: 'nowrap' }}>฿{tableTotal}</div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-            <button onClick={() => { const next = !soundEnabled; setSoundEnabled(next); localStorage.setItem('pos-sound', String(next)); playNewOrder() }}
+            <button onClick={async () => {
+                const next = !soundEnabled
+                setSoundEnabled(next)
+                localStorage.setItem('pos-sound', String(next))
+                try {
+                  const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+                  const ctx = new AudioCtx()
+                  await ctx.resume()
+                  audioCtxRef.current = ctx
+                  if (next) {
+                    playBeep(ctx, 880, ctx.currentTime)
+                    playBeep(ctx, 880, ctx.currentTime + 0.2)
+                  }
+                } catch (e) {}
+              }}
               style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: soundEnabled ? '#22c55e' : '#e5e7eb', color: soundEnabled ? '#fff' : '#6b7280', fontWeight: 500 }}>
               {soundEnabled ? '🔔 เสียงเปิด' : '🔕 เสียงปิด'}
             </button>
