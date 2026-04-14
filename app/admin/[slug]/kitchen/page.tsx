@@ -1,7 +1,8 @@
 'use client'
 
-import { use, useEffect, useState, useCallback } from 'react'
+import { use, useEffect, useState, useCallback, useRef } from 'react'
 import AdminLayout from '../AdminLayout'
+import { useNotificationSound } from '@/lib/useSound'
 
 type OrderItem = { id: string; name: string; qty: number; isCancelled: boolean }
 type Order = { id: string; status: 'PENDING' | 'COOKING'; createdAt: string; table: { tableNumber: number }; items: OrderItem[] }
@@ -18,6 +19,9 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState(new Date())
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const prevOrderIds = useRef<Set<string>>(new Set())
+  const { playNewOrder } = useNotificationSound()
 
   const color = store?.themeColor ?? '#f97316'
 
@@ -25,11 +29,19 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
     const res = await fetch(`/api/kitchen/${slug}/orders`)
     if (res.ok) {
       const data = await res.json()
-      setOrders(data.orders)
+      const newOrders: Order[] = data.orders
+
+      // เช็คออเดอร์ใหม่
+      if (soundEnabled && prevOrderIds.current.size > 0) {
+        const hasNew = newOrders.some(o => !prevOrderIds.current.has(o.id))
+        if (hasNew) playNewOrder()
+      }
+      prevOrderIds.current = new Set(newOrders.map(o => o.id))
+      setOrders(newOrders)
       setLastUpdate(new Date())
     }
     setLoading(false)
-  }, [slug])
+  }, [slug, soundEnabled, playNewOrder])
 
   useEffect(() => {
     fetch(`/api/admin/${slug}/tables`).then(r => r.json()).then(d => setStore(d.store))
@@ -71,7 +83,12 @@ export default function KitchenPage({ params }: { params: Promise<{ slug: string
           <p style={{ fontSize: 15, fontWeight: 500, margin: 0, color: '#fff' }}>Kitchen Display</p>
           <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>อัปเดตทุก 5 วินาที · {lastUpdate.toLocaleTimeString('th-TH')}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => { setSoundEnabled(v => !v); playNewOrder() }}
+            style={{ fontSize: 11, padding: '4px 12px', borderRadius: 20, border: 'none', cursor: 'pointer', background: soundEnabled ? '#22c55e' : '#374151', color: '#fff', fontWeight: 500 }}>
+            {soundEnabled ? '🔔 เสียงเปิด' : '🔕 เสียงปิด'}
+          </button>
           <span style={{ background: 'rgba(245,158,11,0.2)', color: '#fbbf24', fontSize: 12, padding: '4px 12px', borderRadius: 20 }}>รอทำ {pending.length}</span>
           <span style={{ background: 'rgba(34,197,94,0.2)', color: '#4ade80', fontSize: 12, padding: '4px 12px', borderRadius: 20 }}>กำลังทำ {cooking.length}</span>
         </div>

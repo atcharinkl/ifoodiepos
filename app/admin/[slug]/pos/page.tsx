@@ -1,7 +1,8 @@
 'use client'
 
-import { use, useEffect, useState, useCallback, useMemo } from 'react'
+import { use, useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import AdminLayout from '../AdminLayout'
+import { useNotificationSound } from '@/lib/useSound'
 
 type MenuItem = { id: string; name: string; price: number; imageUrl: string | null; isAvailable: boolean; category: { id: string; name: string } }
 type Category = { id: string; name: string; items: any[] }
@@ -29,6 +30,9 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
   const [successMsg, setSuccessMsg] = useState('')
   const [rightTab, setRightTab] = useState<'cart' | 'order'>('cart')
   const [orders, setOrders] = useState<Order[]>([])
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const prevPaymentCount = useRef(0)
+  const { playNewOrder, playPaymentRequest } = useNotificationSound()
 
   const color = store?.themeColor ?? '#f97316'
 
@@ -40,7 +44,13 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
   const fetchOrders = useCallback(async () => {
     const res = await fetch(`/api/admin/${slug}/orders`)
     const data = await res.json()
-    setOrders(data.orders ?? [])
+    const list = data.orders ?? []
+    if (soundEnabled) {
+      const pc = list.filter((o: Order) => o.status === 'REQUESTING_PAYMENT').length
+      if (pc > prevPaymentCount.current) playPaymentRequest()
+      prevPaymentCount.current = pc
+    }
+    setOrders(list)
   }, [slug])
 
   const fetchAll = useCallback(async () => {
@@ -255,6 +265,12 @@ export default function POSPage({ params }: { params: Promise<{ slug: string }> 
                 {tables.map(t => <option key={t.id} value={t.id}>โต๊ะ {t.tableNumber}</option>)}
               </select>
               <div style={{ fontSize: 13, fontWeight: 500, color, whiteSpace: 'nowrap' }}>฿{tableTotal}</div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button onClick={() => { setSoundEnabled(v => !v); playNewOrder() }}
+              style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', background: soundEnabled ? '#22c55e' : '#e5e7eb', color: soundEnabled ? '#fff' : '#6b7280', fontWeight: 500 }}>
+              {soundEnabled ? '🔔 เสียงเปิด' : '🔕 เสียงปิด'}
+            </button>
             </div>
             {paymentPending && (
               <div style={{ background: '#f3e8ff', color: '#7e22ce', fontSize: 11, fontWeight: 500, padding: '6px 10px', borderRadius: 8, marginBottom: 8, textAlign: 'center' }}>
